@@ -1,120 +1,186 @@
 import random
 
-playground = ["A","1","2","3","4","5","6","7","8","9" ]
-player = ["X", "O"]
-currentPlayer = "X"
-modus = None
 
-def printPlayground():
-    print(playground[1] + "|" + playground[2] + "|" + playground[3])
-    print(playground[4] + "|" + playground[5] + "|" + playground[6])
-    print(playground[7] + "|" + playground[8] + "|" + playground[9])
+class Player:
+    def __init__(self, symbol):
+        self.symbol = symbol
 
 
-def playerInput():
+def printPlayground(board):
+    print(" " + board[1-1] + "|" + board[2-1] + "|" + board[3-1])
+    print(" " + board[4-1] + "|" + board[5-1] + "|" + board[6-1])
+    print(" " + board[7-1] + "|" + board[8-1] + "|" + board[9-1])
+
+
+def playerInput(board, currentPlayer):
     while True:
-        print()
-        print("{} is on move".format(currentPlayer))
-        playIn = input("Choose the field: ")   
-        if playIn == 'q':
-            return 'q'        
+        print("Player {} is on move".format(currentPlayer.symbol))
+        position = input("Choose the field: ")
+        if position == 'q':
+            return 'q'
         try:
-            playIn = int(playIn)
+            position = int(position)
         except ValueError:
-            print("Please use only values between 1 and 9")
+            print("Please use numbers")
         else:
-            if playIn >= 1 and playIn < 10:
-                if playground[playIn] == 'X' or playground[playIn] == 'O':
+            if position >= 1 and position < 10:
+                position -= 1
+                if not board[position] == ' ':
                     print("The field is already occupied.")
                 else:
-                    return playIn
+                    return position
             else:
                 print("Only numbers between 1 and 9!")
 
-def changePlayer():
-    global currentPlayer
-    global modus
-    if modus == 'p':
-        if currentPlayer == player[0]:
-            currentPlayer = player[1]
-        else:
-            currentPlayer = player[0]
-    else:
-        if currentPlayer == 'C':
-            currentPlayer = 'P'
-        else:
-            currentPlayer = 'C'
 
-#return True if game ended
-def gameEnd():
-    for i in playground:
-        if i.isnumeric():
+def changePlayer(current_player, player_1, player_2):
+    if current_player == player_1:
+        return player_2
+    else:
+        return player_1
+
+
+def gameEnd(board):
+    for i in board:
+        if i == ' ':
             return False
     return True
 
-def setStone(input):
-    global currentPlayer
 
-    if currentPlayer == player[0]:
-        playground[input] = 'X'
-    elif currentPlayer == 'C':
-        playground[input] = 'C'
+def setStone(input, board, current_player):
+    board[input] = current_player.symbol
+
+
+def checkForWin(board, player):
+    symbol = player.symbol
+    if board[1-1] == symbol and board[2-1] == symbol and board[3-1] == symbol:
+        return symbol
+    elif board[4-1] == symbol and board[5-1] == symbol and board[6-1] == symbol:
+        return symbol
+    elif board[7-1] == symbol and board[8-1] == symbol and board[9-1] == symbol:
+        return symbol
+    elif board[1-1] == symbol and board[4-1] == symbol and board[7-1] == symbol:
+        return symbol
+    elif board[2-1] == symbol and board[5-1] == symbol and board[8-1] == symbol:
+        return symbol
+    elif board[3-1] == symbol and board[6-1] == symbol and board[9-1] == symbol:
+        return symbol
+    elif board[1-1] == symbol and board[5-1] == symbol and board[9-1] == symbol:
+        return symbol
+    elif board[3-1] == symbol and board[5-1] == symbol and board[7-1] == symbol:
+        return symbol
+
+
+def play_again():
+    print("Wanna play again? (y or n)")
+    return input().lower().startswith('y')
+
+
+def copy_board(board):
+    copy = []
+    for i in board:
+        copy.append(i)
+    return copy
+
+
+def choose_random_move(board, list_moves):
+    for i in list_moves:
+        if board[i] != ' ':
+            list_moves.remove(i)
+    if len(list_moves) != 0:
+        return random.choice(list_moves)
     else:
-        playground[input] = 'O'
+        return None
 
-def checkForWin():
-    if playground[1] == playground[2] and playground[2] == playground[3]:
-        return playground[2]
-    elif playground[4] == playground[5] and playground[5] == playground[6]:
-        return playground[5]
-    elif playground[7] == playground[8] and playground[8] == playground[9]:
-        return playground[8]
-    elif playground[1] == playground[4] and playground[4] == playground[7]:
-        return playground[4]
-    elif playground[2] == playground[5] and playground[5] == playground[8]:
-        return playground[5]
-    elif playground[3] == playground[6] and playground[6] == playground[9]:
-        return playground[6]
-    elif playground[1] == playground[5] and playground[5] == playground[9]:
-        return playground[5]
-    elif playground[3] == playground[5] and playground[5] == playground[7]:
-        return playground[5]
+
+def get_ai_move(board, player, oponent):
+    # 1. check for a winning move
+    for i in range(0, 9):
+        if board[i] == ' ':
+            copy = copy_board(board)
+            setStone(i, copy, player)
+            if checkForWin(copy, player):
+                return i
+    # 2. check to prevent a lose
+    for i in range(0, 9):
+        if board[i] == ' ':
+            copy = copy_board(board)
+            setStone(i, copy, oponent)
+            if checkForWin(copy, oponent):
+                return i
+  
+    # 3. if possible place symbol in corner
+    move_pos = choose_random_move(board, [0, 2, 6, 8])
+    if move_pos != None:
+        return move_pos
+    # 4. if possible place symbol in center
+    move_pos = choose_random_move(board, [4])
+    if move_pos != None:
+        return move_pos
+    # 5. if possible place symbol in side
+    move_pos = choose_random_move(board, [1, 3, 5, 7])
+    if move_pos != None:
+        return move_pos
+
 
 def gameLoop():
-    global modus
-    global currentPlayer
-    activ = True
-    modus = input("Chose the modus - 'c' for against computer or 'p' for 2 players: ")
-    if modus == 'c':
-            currentPlayer = 'C'
-
-    while activ:
-        printPlayground()
-        if currentPlayer == 'C':
-            playground_KI = []
-            for field in playground:
-                if field != 'X' and field != 'C' and field != 'A':
-                    playground_KI += field
-            setStone(int(random.choice(playground_KI)))
-            print()
-            print("C has placed.")
+    # Reset the board
+    while True:
+        board = [' '] * 9
+        player_1 = Player('X')
+        player_2 = Player('O')
+        current_player = player_1
+        try:
+            modus = str(input(
+                "Chose the modus - 'c' for against computer or 'p' for 2 players: ").lower())
+            if not modus.startswith(('c', 'p')):
+                continue
+        except ValueError:
+            print("Please ty again")
+            continue
+        if modus == 'c':
+            print("Computer is Player O")
+        try:
+            start_player = str(
+                input("Who want`s to start? (X or O): ").upper())
+            if not start_player.startswith(('X', 'O')):
+                continue
+        except ValueError:
+            print("Please ty again")
+            continue
+        if start_player == 'X':
+            current_player = player_1
         else:
-            inputPlayer = playerInput()
-            if inputPlayer == 'q':
-                activ = False
-            else:
-                setStone(inputPlayer)
+            current_player = player_2
 
-        if gameEnd():
-            printPlayground()
+        while not gameEnd(board):
+            printPlayground(board)
+            print()
+            if current_player == player_2 and modus == 'c':
+                print("Computer is on move")
+                setStone(get_ai_move(board, player_2, player_1),
+                         board, current_player)
+            else:
+                inputPlayer = playerInput(board, current_player)
+                if inputPlayer == 'q':
+                    break
+                else:
+                    setStone(inputPlayer, board, current_player)
+
+            win = checkForWin(board, current_player)
+            if win:
+                printPlayground(board)
+                print("{} won the game.".format(win))
+                break
+
+            current_player = changePlayer(current_player, player_1, player_2)
+
+        if not win:
             print("Game over. Egality!")
-            activ = False
-        win = checkForWin()
-        if win:
-            printPlayground()
-            print("{} won the game.".format(win))
-            activ = False
-        changePlayer()
+            printPlayground(board)
+        if not play_again():
+            break
+
 
 if __name__ == "__main__":
     gameLoop()
