@@ -1,5 +1,11 @@
 import random
+import pygame
+import sys
 
+WHITE = (255, 255, 255)
+BLACK = (0, 0, 0)
+GREY = (210, 210, 210)
+OFFSET = 100
 
 class Player:
     def __init__(self, symbol):
@@ -168,64 +174,161 @@ def minimax(board, depth, is_maximizer):
 
 
 def gameLoop():
+    screen = ui_setup()
     while True:
         # Reset the board
         board = [' '] * 9
+        draw_empty_board(screen, board)
         player_1 = Player('X')
-        player_2 = Player('O')
+        player_2 = Player('O')      # AI
         current_player = player_1
-        try:
-            modus = str(input(
-                "Chose the modus - 'c' for against computer or 'p' for 2 players: ").lower())
-            if not modus.startswith(('c', 'p')):
-                continue
-        except ValueError:
-            print("Please ty again")
-            continue
-        if modus == 'c':
-            print("Computer is Player O")
-        try:
-            start_player = str(
-                input("Who want`s to start? (X or O): ").upper())
-            if not start_player.startswith(('X', 'O')):
-                continue
-        except ValueError:
-            print("Please ty again")
-            continue
-        if start_player == 'X':
-            current_player = player_1
-        else:
-            current_player = player_2
+        gameOver = False
+        # try:
+        #     modus = str(input(
+        #         "Chose the modus - 'c' for against computer or 'p' for 2 players: ").lower())
+        #     if not modus.startswith(('c', 'p')):
+        #         continue
+        # except ValueError:
+        #     print("Please ty again")
+        #     continue
+        # if modus == 'c':
+        #     print("Computer is Player O")
+        # try:
+        #     start_player = str(
+        #         input("Who want`s to start? (X or O): ").upper())
+        #     if not start_player.startswith(('X', 'O')):
+        #         continue
+        # except ValueError:
+        #     print("Please try again")
+        #     continue
+        # if start_player == 'X':
+        #     current_player = player_1
+        # else:
+        #     current_player = player_2
 
-        while not gameEnd(board):
-            printPlayground(board)
-            print()
-            #Check if AI is selected
-            if current_player == player_2 and modus == 'c':
-                print("Computer is on move")
-                setStone(best_move(board, current_player),
-                         board, current_player)
-            else:
-                inputPlayer = playerInput(board, player_1)
-                if inputPlayer == 'q':
-                    break
-                else:
-                    setStone(inputPlayer, board, current_player)
+        while not gameOver:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    sys.exit()
+            
+                # printPlayground(board)
+                # print()
+                # #Check if AI is selected
+                # if current_player == player_2 and modus == 'c':
+                #     print("Computer is on move")
+                #     setStone(best_move(board, current_player),
+                #             board, current_player)
+                # else:
+                    # inputPlayer = playerInput(board, current_player)
+                    # if inputPlayer == 'q':
+                    #     break
+                    # else:
+                    #     setStone(inputPlayer, board, current_player)
+                if event.type == pygame.MOUSEBUTTONDOWN and current_player == player_1:
+                    posx, posy = event.pos
+                    if posx >= 0 and posx < OFFSET and posy >= 0 and posy < OFFSET:
+                        place = 0
+                    if posx >= OFFSET and posx < OFFSET * 2 and posy >= 0 and posy < OFFSET:
+                        place = 1
+                    if posx >= OFFSET * 2 and posx < OFFSET * 3 and posy >= 0 and posy < OFFSET:
+                        place = 2
+                    if posx >= 0 and posx < OFFSET and posy >= OFFSET and posy < OFFSET * 2:
+                        place = 3
+                    if posx >= OFFSET and posx < OFFSET * 2 and posy >= OFFSET and posy < OFFSET * 2:
+                        place = 4
+                    if posx >= OFFSET * 2 and posx < OFFSET * 3 and posy >= OFFSET and posy < OFFSET * 2:
+                        place = 5
+                    if posx >= 0 and posx < OFFSET and posy >= OFFSET * 2 and posy < OFFSET * 3:
+                        place = 6
+                    if posx >= OFFSET and posx < OFFSET * 2 and posy >= OFFSET * 2 and posy < OFFSET * 3:
+                        place = 7
+                    if posx >= OFFSET * 2 and posx < OFFSET * 3 and posy >= OFFSET * 2 and posy < OFFSET * 3:
+                        place = 8
+                    
+                    if not board[place] == ' ':
+                        continue
+                    setStone(place, board, current_player)
+                    win, player = checkForWin(board)
+                    if win:
+                        print("{} won the game.".format(player))    
+                        show_message(screen, player + "WON!")
+                        gameOver = True
+                    elif gameEnd(board):
+                        gameOver = True
+                        show_message(screen, "Egality")
+                        print("p")
+                    printPlayground(board)
+                    draw_board(screen, board)
+                    current_player = changePlayer(current_player, player_1, player_2)
+            
+            if current_player == player_2 and not gameOver:
+                setStone(best_move(board, current_player), board, current_player)
+                win, player = checkForWin(board)
+                if win:
+                    print("{} won the game.".format(player))
+                    show_message(screen, player + " WON!")
+                    gameOver = True
+                elif gameEnd(board):
+                    gameOver = True
+                    show_message(screen, "Egality")
+                draw_board(screen, board)
+                current_player = changePlayer(current_player, player_1, player_2)
 
-            win, player = checkForWin(board)
-            if win:
-                printPlayground(board)
-                print("{} won the game.".format(player))
-                break
 
-            current_player = changePlayer(current_player, player_1, player_2)
 
-        if not win:
-            print("Game over. Egality!")
-            printPlayground(board)
-        if not play_again():
-            break
+def ui_setup():
+    pygame.init()
+    height = 300
+    width = 300
+    pygame.display.set_caption('TicTacToe')
+    screen = pygame.display.set_mode((width, height))
+    screen.fill(WHITE)
+    return screen
 
+def draw_board(screen, board):
+    myfont = pygame.font.SysFont("monospace", 100)
+    pygame.draw.line(screen, BLACK, (100, 0), (100, 300), 4)
+    pygame.draw.line(screen, BLACK, (200, 0), (200, 300), 4)
+    pygame.draw.line(screen, BLACK, (0, 100), (300, 100), 4)
+    pygame.draw.line(screen, BLACK, (0, 200), (300, 200), 4)
+
+    if board:
+
+        for i in range(len(board)):
+            if i < 3:
+                posx = i * 100 + 25
+                posy = 25
+            elif 3 <= i < 6 :
+                posx = (i - 3) * 100 + 25
+                posy = 125
+            elif 6 <= i < 9:
+                posx = (i - 6) * 100 + 25
+                posy = 225
+
+            if board[i] == 'X':
+                label = myfont.render("X", 1, BLACK)
+                screen.blit(label, (posx, posy))
+            elif board[i] == 'O':
+                label = myfont.render("O", 1, GREY)
+                screen.blit(label, (posx, posy))
+
+    pygame.display.flip()
+
+def draw_empty_board(screen, board):
+    screen.fill(WHITE)
+    pygame.draw.line(screen, BLACK, (100, 0), (100, 300), 4)
+    pygame.draw.line(screen, BLACK, (200, 0), (200, 300), 4)
+    pygame.draw.line(screen, BLACK, (0, 100), (300, 100), 4)
+    pygame.draw.line(screen, BLACK, (0, 200), (300, 200), 4)
+    pygame.display.flip()
+
+def show_message(screen, message):
+    screen.fill(WHITE)
+    myfont = pygame.font.SysFont("monospace", 60)
+    label = myfont.render(message, 1, BLACK)
+    screen.blit(label, (80, 120))
+    pygame.display.flip()
+    pygame.time.delay(2000)
 
 if __name__ == "__main__":
     gameLoop()
