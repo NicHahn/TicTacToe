@@ -1,4 +1,4 @@
 # TicTacToe
-Simple version of the game TicTacToe with a simple AI. 
+Simple version of the game TicTacToe with a simple AI using Mini-Max-Algorithm. 
 
-![GitHub Logo](/Images/TicTacToe.png)
+![Image](/Images/TicTacToe.png)
